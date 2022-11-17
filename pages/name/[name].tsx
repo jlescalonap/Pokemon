@@ -10,14 +10,13 @@ import { Layout } from "../../components/layouts";
 import { Pokemon } from "../../interfaces/";
 import { localFavorites } from "../../utils";
 import { PokemonListResponse } from "../../interfaces/pokemon-list";
-import { getPokemonInfo } from '../../utils/getPokemonInfo';
+import { getPokemonInfo } from "../../utils/getPokemonInfo";
 
 interface Props {
   pokemon: Pokemon;
 }
 
 const PokemonByNamePage: NextPage<Props> = ({ pokemon }) => {
-
   const [isInFavorites, setIsInFavorites] = useState(
     localFavorites.existInFavorites(pokemon.id)
   );
@@ -119,17 +118,29 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     paths: pokemonNames.map((name) => ({
       params: { name },
     })),
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { name } = params as { name: string };
 
+  const pokemon = await getPokemonInfo(name);
+
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
   return {
     props: {
-      pokemon: await getPokemonInfo( name )
+      pokemon,
     },
+    revalidate: 86400,
   };
 };
 
